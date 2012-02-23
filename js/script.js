@@ -27,7 +27,8 @@ var pz = {};
 		playerRange = 75,
 		playerCooldown = 4,
 		playerKeys = [],
-		gameOver = false;
+		gameOver = false,
+		testFrameByFrame = false;
 	
 	pz.init = function(){
 		screen = Raphael(0, 0, 480, 320);
@@ -43,6 +44,10 @@ var pz = {};
 			keydown : pz.player.keydown,
 			keyup : pz.player.keyup
 		});
+		
+		if(testFrameByFrame){
+			$(window).on('click', pz.play);
+		}
 
 		pz.play();
 	};
@@ -103,7 +108,15 @@ var pz = {};
 				player.weapon.attr('opacity', player.weapon.attr('opacity') - .3);
 			}
 			
-			if(zombies.length == 0 || player.ojb.isZombie || player.coolDown > 0){
+			if(zombies.length == 0 || player.isZombie || player.coolDown > 0){
+				return;
+			}
+			
+			if(player.obj.isZombie){
+				player.obj.attr('fill', '#F80F00');
+				player.obj.attr('stroke', '#F80F00');
+				player.isZombie = true;
+				civilians.splice(0, 1);
 				return;
 			}
 			
@@ -113,6 +126,7 @@ var pz = {};
 			
 			plrX = player.obj.attr('cx');
 			plrY = player.obj.attr('cy');
+			
 			for(i=0; i<zombies.length; i++){
 				zomb = zombies[i];
 				zombX = zomb.attr('x');
@@ -196,7 +210,7 @@ var pz = {};
 		move : function(){
 			var civ, civX, civY, zomb, zombX, zombY, distance, nearest, ratio, i, j;
 			
-			for(i=0; i<civilians.length; i++){
+			for(i=civilians.length-1; i>=0; i--){
 				if(zombies.length == 0){
 					return;
 				}
@@ -212,7 +226,7 @@ var pz = {};
 				if(civ.isZombie){
 					civ.attr('fill', '#F80F00');
 					civ.attr('stroke', '#F80F00');
-					zombies.push(civ);
+					zombies.push(civilians.splice(i, 1)[0]);
 					continue;
 				}
 				
@@ -220,28 +234,30 @@ var pz = {};
 					dist : 1000
 				};
 				
-				for(j=0; j<zombies.length; j++){
+				for(j=0; j<civ.zombies.length; j++){
 					zomb = zombies[j];
 					zombX = zomb.attr('x');
 					zombY = zomb.attr('y');
 					distance = pz.math.pyth(civX - zombX, civY - zombY);
 					if(distance < nearest.dist){
 						nearest = {
-							zombX : zombX,
-							zombY : zombY,
+							x : zombX,
+							y : zombY,
 							dist : distance
 						};
 					}
 				}
 				
-				ratio = civilianSpeed / nearest.dist;
-				civX = civX - ratio * (nearest.zombX - civX);
-				civX = (civX < 1 ? 1 : (civX > screenWidth-7 ? screenWidth-7 : civX));
-				civY = civY - ratio * (nearest.zombY - civY);
-				civY = (civY < 0 ? 0 : (civY > screenHeight-6 ? screenHeight-6 : civY));
-				
-				civ.attr('x', civX);
-				civ.attr('y', civY);
+				if(nearest.x){
+					ratio = civilianSpeed / nearest.dist;
+					civX = civX - ratio * (nearest.x - civX);
+					civX = (civX < 1 ? 1 : (civX > screenWidth-7 ? screenWidth-7 : civX));
+					civY = civY - ratio * (nearest.y - civY);
+					civY = (civY < 0 ? 0 : (civY > screenHeight-6 ? screenHeight-6 : civY));
+					
+					civ.attr('x', civX);
+					civ.attr('y', civY);
+				}
 			}
 		}
 	};
@@ -285,7 +301,9 @@ var pz = {};
 						}
 					}
 					
-					zomb.civilian.zombies.push(zomb);
+					if(zomb.civilian.type != 'player'){
+						zomb.civilian.zombies.push(zomb);
+					}
 				}
 				
 				civ = zomb.civilian;
@@ -390,7 +408,9 @@ var pz = {};
 		pz.civilians.move();
 		pz.explosions.animate();
 		
-		playTimer = setTimeout(pz.play, 1000 / fps);
+		if(!testFrameByFrame){
+			playTimer = setTimeout(pz.play, 1000 / fps);
+		}
 	};
 	
 	pz.math = {
