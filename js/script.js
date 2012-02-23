@@ -12,20 +12,24 @@ var pz = {};
 		screenHeight = 320,
 		screenTexts = {},
 		civilianCount = 100,
-		civilianSpeed = 1,
+		civilianSpeed = 1.25,
 		civilians = [],
 		zombieCount = 50,
 		zombieSpeed = 2,
+		zombieWanderFreq = 50,
 		zombies = [],
 		zombieExplosions = [],
 		mathrandom = Math.random,
 		mathfloor = Math.floor,
 		mathsqrt = Math.sqrt,
 		mathround = Math.round,
+		mathcos = Math.cos,
+		mathsin = Math.sin,
+		mathpi = Math.PI,
 		fps = 30,
 		playTimer,
 		player = {},
-		playerSpeed = 4,
+		playerSpeed = 3,
 		playerRange = 75,
 		playerCooldown = 4,
 		playerKeys = [],
@@ -34,7 +38,7 @@ var pz = {};
 		testFps = true;
 	
 	pz.init = function(){
-		screen = Raphael(0, 0, 480, 320);
+		screen = Raphael(0, 0, screenWidth, screenHeight);
 		
 		pz.screen.draw();
 		pz.player.init();
@@ -96,11 +100,11 @@ var pz = {};
 				'text-anchor': 'end'
 			});
 			
-			screenTexts.fps = screen.text(470, 36, '');
+			screenTexts.fps = screen.text(433.5, 36, '');
 			screenTexts.fps.attr({
 				'fill': '#fff',
 				'font': '9px Arial',
-				'text-anchor': 'end'
+				'text-anchor': 'start'
 			});
 		},
 		updateTexts : function(){
@@ -123,29 +127,45 @@ var pz = {};
 			
 			player.obj = plr;
 			player.coolDown = playerCooldown;
+			player.diagSpeed = mathsqrt(playerSpeed * playerSpeed * .5);
 		},
 		createWeapon : function(){
-			var weapon = screen.path('M0 0 L0 0');
-			weapon.attr({
+			var weapon1, weapon2;
+			
+			weapon1 = screen.path('M0 0 L0 0');
+			weapon1.attr({
 				'stroke-width': '2',
 				'stroke': '#0085FF',
 				'opacity': '0'
 			});
-			player.weapon = weapon;
+			weapon2 = screen.path('M0 0 L0 0');
+			weapon2.attr({
+				'stroke-width': '2',
+				'stroke': '#0085FF',
+				'opacity': '0'
+			});
+			
+			player.weapon1 = weapon1;
+			player.weapon2 = weapon2;
+			player.weaponIndex = 1;
 		},
 		shoot : function(){
-			var plrX, plrY, zomb, zombX, zombY, distance, nearest, i;
+			var weapon, plrX, plrY, zomb, zombX, zombY, distance, nearest, i;
 			
 			player.coolDown += -1;
 			
-			if(player.weapon.attr('opacity') > 0){
-				plrX = player.obj.attr('cx');
-				plrY = player.obj.attr('cy');
+			for(i=1; i<=2; i++){
+				weapon = player['weapon' + i];
 				
-				player.weapon.attr({
-					'path': 'M' + plrX + ' ' + plrY + ' L' + player.zombX + ' ' + player.zombY,
-					'opacity': player.weapon.attr('opacity') - .3
-				});
+				if(weapon.attr('opacity') > 0){
+					plrX = player.obj.attr('cx');
+					plrY = player.obj.attr('cy');
+					
+					weapon.attr({
+						'path': 'M' + plrX + ' ' + plrY + ' L' + weapon.zombX + ' ' + weapon.zombY,
+						'opacity': weapon.attr('opacity') - .15
+					});
+				}
 			}
 			
 			if(zombies.length == 0 || player.isZombie || player.coolDown > 0){
@@ -175,9 +195,12 @@ var pz = {};
 			}
 			
 			if(nearest.dist <= playerRange){
-				player.zombX = nearest.x;
-				player.zombY = nearest.y;
-				player.weapon.attr({
+				weapon = player['weapon' + player.weaponIndex];
+				player.weaponIndex = (player.weaponIndex == 1 ? 2 : 1);
+				
+				weapon.zombX = nearest.x;
+				weapon.zombY = nearest.y;
+				weapon.attr({
 					'path': 'M' + plrX + ' ' + plrY + ' L' + nearest.x + ' ' + nearest.y,
 					'opacity': '1'
 				});
@@ -210,7 +233,7 @@ var pz = {};
 			}
 			
 			if(x != 0 && y != 0){
-				diagSpeed = mathsqrt(playerSpeed * playerSpeed * .5);
+				diagSpeed = player.diagSpeed;
 				x = (x > 0 ? diagSpeed : -diagSpeed);
 				y = (y > 0 ? diagSpeed : -diagSpeed);
 			}
@@ -282,17 +305,34 @@ var pz = {};
 				if(nearest.x){
 					ratio = civilianSpeed / nearest.dist;
 					civX = civX - ratio * (nearest.x - civX);
-					civX = (civX < 1 ? 1 : (civX > screenWidth-7 ? screenWidth-7 : civX));
 					civY = civY - ratio * (nearest.y - civY);
-					civY = (civY < 0 ? 0 : (civY > screenHeight-6 ? screenHeight-6 : civY));
-					
-					civ.attr({
-						'x': civX,
-						'y': civY
-					});
 					
 					civ.zombies = [];
 				}
+				else{
+					if(!civ.timeToWander){
+						var dir = mathpi * mathrandom() * 2;
+						civ.wanderDir = {
+							x : civilianSpeed * mathcos(dir),
+							y : civilianSpeed *  mathsin(dir)
+						};
+						civ.timeToWander = 15;
+					}
+					else{
+						civ.timeToWander += -1;
+					}
+					
+					civX = civX + civ.wanderDir.x;
+					civY = civY + civ.wanderDir.y;
+				}
+				
+				civX = (civX < 1 ? 1 : (civX > screenWidth-7 ? screenWidth-7 : civX));
+				civY = (civY < 0 ? 0 : (civY > screenHeight-6 ? screenHeight-6 : civY));
+				
+				civ.attr({
+					'x': civX,
+					'y': civY
+				});
 			}
 		}
 	};
@@ -309,6 +349,7 @@ var pz = {};
 					'stroke': '#F80F00',
 					'stroke-opacity': '.5'
 				});
+				zomb.timeToWander = mathfloor(mathrandom() * zombieWanderFreq);
 				zombies.push(zomb);
 			}
 		},
@@ -316,67 +357,96 @@ var pz = {};
 			var zomb, zombX, zombY, civ, civX, civY, distance, distX, distY, nearest, ratio, i, j, rand;
 				
 			for(i=0; i<zombies.length; i++){
-				if(civilians.length == 0){
-					return;
-				}
-			
 				zomb = zombies[i];
 				zombX = zomb.attr('x');
 				zombY = zomb.attr('y');
 				
-				nearest = {
-					dist : 1000
-				};
-				
-				for(j=0; j<civilians.length; j++){
-					civ = civilians[j];
-					civX = (civ.type != 'player' ? civ.attr('x') : civ.attr('cx'));
-					civY = (civ.type != 'player' ? civ.attr('y') : civ.attr('cy'));
-					distX = civX - zombX;
-					distY = civY - zombY;
-					distance = pz.math.pyth(distX, distY);
-					if(distance < nearest.dist){
-						nearest = {
-							index : j,
-							civ : civ,
-							x : civX,
-							y : civY,
-							dist : distance,
-							distX : distX,
-							distY : distY
-						};
+				if(zomb.timeToWander > 15 && civilians.length > 0){
+					nearest = {
+						dist : 1000
+					};
+					
+					for(j=0; j<civilians.length; j++){
+						civ = civilians[j];
+						civX = (civ.type != 'player' ? civ.attr('x') : civ.attr('cx'));
+						civY = (civ.type != 'player' ? civ.attr('y') : civ.attr('cy'));
+						distX = civX - zombX;
+						distY = civY - zombY;
+						distance = pz.math.pyth(distX, distY);
+						if(distance < nearest.dist){
+							nearest = {
+								index : j,
+								civ : civ,
+								x : civX,
+								y : civY,
+								dist : distance,
+								distX : distX,
+								distY : distY
+							};
+							zomb.nearest = nearest;
+						}
 					}
-				}
-				
-				if(nearest.civ.type != 'player'){
-					nearest.civ.zombies.push(zomb);
-				}
-				
-				if(nearest.dist > zombieSpeed){
-					ratio = zombieSpeed / nearest.dist;
-					zomb.attr({
-						'x': zombX + ratio * (nearest.distX),
-						'y': zombY + ratio * (nearest.distY)
-					})
+					
+					if(nearest.civ.type != 'player'){
+						nearest.civ.zombies.push(zomb);
+					}
+					
+					if(nearest.dist > zombieSpeed){
+						ratio = zombieSpeed / nearest.dist;
+						zomb.attr({
+							'x': zombX + ratio * (nearest.distX),
+							'y': zombY + ratio * (nearest.distY)
+						});
+					}
+					else{
+						zomb.attr({
+							'x': nearest.x,
+							'y': nearest.y
+						});
+						
+						//eat civilian
+						civ = civilians.splice(nearest.index, 1)[0];
+						civ.attr({
+							'fill': '#F80F00',
+							'stroke': '#F80F00'
+						});
+						civ.timeToWander = zombieWanderFreq;
+						zombies.push(civ);
+						
+						if(civ.type == 'player'){
+							player.isZombie = true;
+						}
+					}
 				}
 				else{
+					if(!zomb.wanderDir){
+						var dir = mathpi * mathrandom() * (zomb.nearest ? .5 : 2);
+						zomb.wanderDir = {
+							x : zombieSpeed * (zomb.nearest && zomb.nearest.distX < 0 ? -mathcos(dir) : mathcos(dir)),
+							y : zombieSpeed * (zomb.nearest && zomb.nearest.distY < 0 ? -mathsin(dir) : mathsin(dir))
+						};
+					}
+					
+					zombX = zombX + zomb.wanderDir.x;
+					zombY = zombY + zomb.wanderDir.y;
+					zomb.wanderDir.x = (zombX < 1 || zombX > screenWidth - 7 ? -zomb.wanderDir.x : zomb.wanderDir.x);
+					zomb.wanderDir.y = (zombY < 0 || zombY > screenHeight - 6 ? -zomb.wanderDir.y : zomb.wanderDir.y);
+					
 					zomb.attr({
-						'x': nearest.x,
-						'y': nearest.y
+						'x': zombX,
+						'y': zombY
 					});
 					
-					//eat civilian
-					civ = civilians.splice(nearest.index, 1)[0];
-					civ.attr({
-						'fill': '#F80F00',
-						'stroke': '#F80F00'
-					});
-					zombies.push(civ);
-					
-					if(civ.type == 'player'){
-						player.isZombie = true;
+					if(zomb.timeToWander <= 0){
+						zomb.timeToWander = zombieWanderFreq;
+						
+						if(civilians.length > 0){
+							zomb.wanderDir = undefined;
+						}
 					}
 				}
+				
+				zomb.timeToWander += -1;
 			}
 		}
 	};
