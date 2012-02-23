@@ -66,32 +66,42 @@ var pz = {};
 			for(i=0; i<screenWidth / 10; i++){
 				x = (i*10+.5);
 				line = screen.path('M' + x + ' 0 L' + x + ' ' + screenHeight);
-				line.attr('stroke-width', '1');
-				line.attr('stroke', '#21331D');
+				line.attr({
+					'stroke-width': '1',
+					'stroke': '#21331D'
+				});
 			}
 			
 			for(i=0; i<screenHeight / 10; i++){
 				y = (i*10+.5);
 				line = screen.path('M0 ' + y + ' L' + screenWidth + ' ' + y);
-				line.attr('stroke-width', '1');
-				line.attr('stroke', '#21331D');
+				line.attr({
+					'stroke-width': '1',
+					'stroke': '#21331D'
+				});
 			}
 		},
 		initTexts : function(){
 			screenTexts.zombies = screen.text(470, 10, 'zombies: ' + zombieCount);
-			screenTexts.zombies.attr('fill', '#fff');
-			screenTexts.zombies.attr('font', '9px Arial');
-			screenTexts.zombies.attr('text-anchor', 'end');
+			screenTexts.zombies.attr({
+				'fill': '#fff',
+				'font': '9px Arial',
+				'text-anchor': 'end'
+			});
 			
 			screenTexts.civilians = screen.text(470, 23, 'civilians: ' + civilianCount);
-			screenTexts.civilians.attr('fill', '#fff');
-			screenTexts.civilians.attr('font', '9px Arial');
-			screenTexts.civilians.attr('text-anchor', 'end');
+			screenTexts.civilians.attr({
+				'fill': '#fff',
+				'font': '9px Arial',
+				'text-anchor': 'end'
+			});
 			
 			screenTexts.fps = screen.text(470, 36, '');
-			screenTexts.fps.attr('fill', '#fff');
-			screenTexts.fps.attr('font', '9px Arial');
-			screenTexts.fps.attr('text-anchor', 'end');
+			screenTexts.fps.attr({
+				'fill': '#fff',
+				'font': '9px Arial',
+				'text-anchor': 'end'
+			});
 		},
 		updateTexts : function(){
 			screenTexts.zombies.attr('text', 'zombies: ' + zombies.length);
@@ -102,10 +112,12 @@ var pz = {};
 	pz.player = {
 		init : function(){
 			var plr = screen.circle(240, 160, 4);
-			plr.attr('fill', '#0085FF');
-			plr.attr('stroke-width', '5');
-			plr.attr('stroke', '#0085FF');
-			plr.attr('stroke-opacity', '.6');
+			plr.attr({
+				'fill': '#0085FF',
+				'stroke-width': '5',
+				'stroke': '#0085FF',
+				'stroke-opacity': '.6'
+			});
 			plr.type = 'player';
 			civilians.push(plr);
 			
@@ -114,9 +126,11 @@ var pz = {};
 		},
 		createWeapon : function(){
 			var weapon = screen.path('M0 0 L0 0');
-			weapon.attr('stroke-width', '2');
-			weapon.attr('stroke', '#0085FF');
-			weapon.attr('opacity', '0');
+			weapon.attr({
+				'stroke-width': '2',
+				'stroke': '#0085FF',
+				'opacity': '0'
+			});
 			player.weapon = weapon;
 		},
 		shoot : function(){
@@ -128,8 +142,10 @@ var pz = {};
 				plrX = player.obj.attr('cx');
 				plrY = player.obj.attr('cy');
 				
-				player.weapon.attr('path', 'M' + plrX + ' ' + plrY + ' L' + player.zombX + ' ' + player.zombY);
-				player.weapon.attr('opacity', player.weapon.attr('opacity') - .3);
+				player.weapon.attr({
+					'path': 'M' + plrX + ' ' + plrY + ' L' + player.zombX + ' ' + player.zombY,
+					'opacity': player.weapon.attr('opacity') - .3
+				});
 			}
 			
 			if(zombies.length == 0 || player.isZombie || player.coolDown > 0){
@@ -161,8 +177,10 @@ var pz = {};
 			if(nearest.dist <= playerRange){
 				player.zombX = nearest.x;
 				player.zombY = nearest.y;
-				player.weapon.attr('path', 'M' + plrX + ' ' + plrY + ' L' + nearest.x + ' ' + nearest.y);
-				player.weapon.attr('opacity', '1');
+				player.weapon.attr({
+					'path': 'M' + plrX + ' ' + plrY + ' L' + nearest.x + ' ' + nearest.y,
+					'opacity': '1'
+				});
 				zombies.splice(nearest.index, 1)[0].attr('opacity', '0');
 				pz.explosions.explode(nearest.x, nearest.y);
 				
@@ -203,8 +221,10 @@ var pz = {};
 				dx = (dx < 1 ? 1 : (dx > screenWidth-7 ? screenWidth-7 : dx));
 				dy = (dy < 0 ? 0 : (dy > screenHeight-6 ? screenHeight-6 : dy));
 				
-				player.obj.attr('cx', dx);
-				player.obj.attr('cy', dy);
+				player.obj.attr({
+					'cx': dx,
+					'cy': dy
+				});
 			}
 		}
 	};
@@ -215,10 +235,12 @@ var pz = {};
 			
 			for(i=0; i<civilianCount; i++){
 				civ = screen.rect(mathfloor(mathrandom() * screenWidth), mathfloor(mathrandom() * screenHeight), 5, 5);
-				civ.attr('fill', '#53FF00');
-				civ.attr('stroke-width', '3.5');
-				civ.attr('stroke', '#53FF00');
-				civ.attr('stroke-opacity', '.5');
+				civ.attr({
+					'fill': '#53FF00',
+					'stroke-width': '3.5',
+					'stroke': '#53FF00',
+					'stroke-opacity': '.5'
+				});
 				civ.zombies = [];
 				civilians.push(civ);
 			}
@@ -264,8 +286,10 @@ var pz = {};
 					civY = civY - ratio * (nearest.y - civY);
 					civY = (civY < 0 ? 0 : (civY > screenHeight-6 ? screenHeight-6 : civY));
 					
-					civ.attr('x', civX);
-					civ.attr('y', civY);
+					civ.attr({
+						'x': civX,
+						'y': civY
+					});
 					
 					civ.zombies = [];
 				}
@@ -279,10 +303,12 @@ var pz = {};
 
 			for(i=0; i<zombieCount; i++){
 				zomb = screen.rect(mathfloor(mathrandom() * screenWidth), mathfloor(mathrandom() * screenHeight), 5, 5);
-				zomb.attr('fill', '#F80F00');
-				zomb.attr('stroke-width', '3.5');
-				zomb.attr('stroke', '#F80F00');
-				zomb.attr('stroke-opacity', '.5');
+				zomb.attr({
+					'fill': '#F80F00',
+					'stroke-width': '3.5',
+					'stroke': '#F80F00',
+					'stroke-opacity': '.5'
+				});
 				zombies.push(zomb);
 			}
 		},
@@ -328,17 +354,23 @@ var pz = {};
 				
 				if(nearest.dist > zombieSpeed){
 					ratio = zombieSpeed / nearest.dist;
-					zomb.attr('x', zombX + ratio * (nearest.distX));
-					zomb.attr('y', zombY + ratio * (nearest.distY));
+					zomb.attr({
+						'x': zombX + ratio * (nearest.distX),
+						'y': zombY + ratio * (nearest.distY)
+					})
 				}
 				else{
-					zomb.attr('x', nearest.x);
-					zomb.attr('y', nearest.y);
+					zomb.attr({
+						'x': nearest.x,
+						'y': nearest.y
+					});
 					
 					//eat civilian
 					civ = civilians.splice(nearest.index, 1)[0];
-					civ.attr('fill', '#F80F00');
-					civ.attr('stroke', '#F80F00');
+					civ.attr({
+						'fill': '#F80F00',
+						'stroke': '#F80F00'
+					});
 					zombies.push(civ);
 					
 					if(civ.type == 'player'){
