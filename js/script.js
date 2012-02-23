@@ -10,6 +10,7 @@ var pz = {};
 		screen,
 		screenWidth = 480,
 		screenHeight = 320,
+		screenTexts = {},
 		civilianCount = 100,
 		civilianSpeed = 1,
 		civilians = [],
@@ -20,6 +21,7 @@ var pz = {};
 		mathrandom = Math.random,
 		mathfloor = Math.floor,
 		mathsqrt = Math.sqrt,
+		mathround = Math.round,
 		fps = 30,
 		playTimer,
 		player = {},
@@ -28,7 +30,8 @@ var pz = {};
 		playerCooldown = 4,
 		playerKeys = [],
 		gameOver = false,
-		testFrameByFrame = false;
+		testFrameByFrame = false,
+		testFps = true;
 	
 	pz.init = function(){
 		screen = Raphael(0, 0, 480, 320);
@@ -39,6 +42,7 @@ var pz = {};
 		pz.player.createWeapon();
 		pz.zombies.init();
 		pz.explosions.init();
+		pz.screen.initTexts();
 		
 		$(window).on({
 			keydown : pz.player.keydown,
@@ -72,6 +76,26 @@ var pz = {};
 				line.attr('stroke-width', '1');
 				line.attr('stroke', '#21331D');
 			}
+		},
+		initTexts : function(){
+			screenTexts.zombies = screen.text(470, 10, 'zombies: ' + zombieCount);
+			screenTexts.zombies.attr('fill', '#fff');
+			screenTexts.zombies.attr('font', '9px Arial');
+			screenTexts.zombies.attr('text-anchor', 'end');
+			
+			screenTexts.civilians = screen.text(470, 23, 'civilians: ' + civilianCount);
+			screenTexts.civilians.attr('fill', '#fff');
+			screenTexts.civilians.attr('font', '9px Arial');
+			screenTexts.civilians.attr('text-anchor', 'end');
+			
+			screenTexts.fps = screen.text(470, 36, '');
+			screenTexts.fps.attr('fill', '#fff');
+			screenTexts.fps.attr('font', '9px Arial');
+			screenTexts.fps.attr('text-anchor', 'end');
+		},
+		updateTexts : function(){
+			screenTexts.zombies.attr('text', 'zombies: ' + zombies.length);
+			screenTexts.civilians.attr('text', 'civilians: ' + civilians.length);
 		}
 	};
 	
@@ -109,14 +133,6 @@ var pz = {};
 			}
 			
 			if(zombies.length == 0 || player.isZombie || player.coolDown > 0){
-				return;
-			}
-			
-			if(player.obj.isZombie){
-				player.obj.attr('fill', '#F80F00');
-				player.obj.attr('stroke', '#F80F00');
-				player.isZombie = true;
-				civilians.splice(0, 1);
 				return;
 			}
 			
@@ -214,19 +230,12 @@ var pz = {};
 				if(zombies.length == 0){
 					return;
 				}
-				
+			
 				civ = civilians[i];
 				civX = civ.attr('x');
 				civY = civ.attr('y');
 				
 				if(civ.type == 'player'){
-					continue;
-				}
-				
-				if(civ.isZombie){
-					civ.attr('fill', '#F80F00');
-					civ.attr('stroke', '#F80F00');
-					zombies.push(civilians.splice(i, 1)[0]);
 					continue;
 				}
 				
@@ -257,6 +266,8 @@ var pz = {};
 					
 					civ.attr('x', civX);
 					civ.attr('y', civY);
+					
+					civ.zombies = [];
 				}
 			}
 		}
@@ -276,53 +287,63 @@ var pz = {};
 			}
 		},
 		move : function(){
-			var zomb, zombX, zombY, civ, civX, civY, distance, nearest, ratio, i, j, rand;
-			
+			var zomb, zombX, zombY, civ, civX, civY, distance, distX, distY, nearest, ratio, i, j, rand;
+				
 			for(i=0; i<zombies.length; i++){
 				if(civilians.length == 0){
 					return;
 				}
-				
+			
 				zomb = zombies[i];
 				zombX = zomb.attr('x');
 				zombY = zomb.attr('y');
 				
-				if(!zomb.civilian){
-					nearest = 1000;
-					
-					for(j=0; j<civilians.length; j++){
-						civ = civilians[j];
-						civX = (civ.type != 'player' ? civ.attr('x') : civ.attr('cx'));
-						civY = (civ.type != 'player' ? civ.attr('y') : civ.attr('cy'));
-						distance = pz.math.pyth(civX - zombX, civY - zombY);
-						if(distance < nearest){
-							nearest = distance;
-							zomb.civilian = civilians[j];
-						}
-					}
-					
-					if(zomb.civilian.type != 'player'){
-						zomb.civilian.zombies.push(zomb);
+				nearest = {
+					dist : 1000
+				};
+				
+				for(j=0; j<civilians.length; j++){
+					civ = civilians[j];
+					civX = (civ.type != 'player' ? civ.attr('x') : civ.attr('cx'));
+					civY = (civ.type != 'player' ? civ.attr('y') : civ.attr('cy'));
+					distX = civX - zombX;
+					distY = civY - zombY;
+					distance = pz.math.pyth(distX, distY);
+					if(distance < nearest.dist){
+						nearest = {
+							index : j,
+							civ : civ,
+							x : civX,
+							y : civY,
+							dist : distance,
+							distX : distX,
+							distY : distY
+						};
 					}
 				}
 				
-				civ = zomb.civilian;
-				civX = (civ.type != 'player' ? civ.attr('x') : civ.attr('cx'));
-				civY = (civ.type != 'player' ? civ.attr('y') : civ.attr('cy'));
-				distance = pz.math.pyth(civX - zombX, civY - zombY);
+				if(nearest.civ.type != 'player'){
+					nearest.civ.zombies.push(zomb);
+				}
 				
-				if(distance > zombieSpeed){
-					ratio = zombieSpeed / distance;
-					zomb.attr('x', zombX + ratio * (civX - zombX));
-					zomb.attr('y', zombY + ratio * (civY - zombY));
+				if(nearest.dist > zombieSpeed){
+					ratio = zombieSpeed / nearest.dist;
+					zomb.attr('x', zombX + ratio * (nearest.distX));
+					zomb.attr('y', zombY + ratio * (nearest.distY));
 				}
 				else{
-					zomb.attr('x', civX);
-					zomb.attr('y', civY);
-					zomb.civilian = undefined;
+					zomb.attr('x', nearest.x);
+					zomb.attr('y', nearest.y);
 					
 					//eat civilian
-					civ.isZombie = true;
+					civ = civilians.splice(nearest.index, 1)[0];
+					civ.attr('fill', '#F80F00');
+					civ.attr('stroke', '#F80F00');
+					zombies.push(civ);
+					
+					if(civ.type == 'player'){
+						player.isZombie = true;
+					}
 				}
 			}
 		}
@@ -407,9 +428,22 @@ var pz = {};
 		pz.zombies.move();
 		pz.civilians.move();
 		pz.explosions.animate();
+		pz.screen.updateTexts();
 		
 		if(!testFrameByFrame){
 			playTimer = setTimeout(pz.play, 1000 / fps);
+		}
+		
+		if(testFps){
+			if(!pz.prevTime){
+				pz.prevTime = (new Date()).getTime();
+				return;
+			}
+			
+			var curTime = (new Date()).getTime();
+			var dt = curTime - pz.prevTime;
+			pz.prevTime = curTime;
+			screenTexts.fps.attr('text', 'fps: ' + (mathround(10000/dt)/10));
 		}
 	};
 	
