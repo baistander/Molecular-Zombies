@@ -130,27 +130,42 @@ var pz = {};
 			player.diagSpeed = mathsqrt(playerSpeed * playerSpeed * .5);
 		},
 		createWeapon : function(){
-			var weapon = screen.path('M0 0 L0 0');
-			weapon.attr({
+			var weapon1, weapon2;
+			
+			weapon1 = screen.path('M0 0 L0 0');
+			weapon1.attr({
 				'stroke-width': '2',
 				'stroke': '#0085FF',
 				'opacity': '0'
 			});
-			player.weapon = weapon;
+			weapon2 = screen.path('M0 0 L0 0');
+			weapon2.attr({
+				'stroke-width': '2',
+				'stroke': '#0085FF',
+				'opacity': '0'
+			});
+			
+			player.weapon1 = weapon1;
+			player.weapon2 = weapon2;
+			player.weaponIndex = 1;
 		},
 		shoot : function(){
-			var plrX, plrY, zomb, zombX, zombY, distance, nearest, i;
+			var weapon, plrX, plrY, zomb, zombX, zombY, distance, nearest, i;
 			
 			player.coolDown += -1;
 			
-			if(player.weapon.attr('opacity') > 0){
-				plrX = player.obj.attr('cx');
-				plrY = player.obj.attr('cy');
+			for(i=1; i<=2; i++){
+				weapon = player['weapon' + i];
 				
-				player.weapon.attr({
-					'path': 'M' + plrX + ' ' + plrY + ' L' + player.zombX + ' ' + player.zombY,
-					'opacity': player.weapon.attr('opacity') - .3
-				});
+				if(weapon.attr('opacity') > 0){
+					plrX = player.obj.attr('cx');
+					plrY = player.obj.attr('cy');
+					
+					weapon.attr({
+						'path': 'M' + plrX + ' ' + plrY + ' L' + weapon.zombX + ' ' + weapon.zombY,
+						'opacity': weapon.attr('opacity') - .15
+					});
+				}
 			}
 			
 			if(zombies.length == 0 || player.isZombie || player.coolDown > 0){
@@ -180,9 +195,12 @@ var pz = {};
 			}
 			
 			if(nearest.dist <= playerRange){
-				player.zombX = nearest.x;
-				player.zombY = nearest.y;
-				player.weapon.attr({
+				weapon = player['weapon' + player.weaponIndex];
+				player.weaponIndex = (player.weaponIndex == 1 ? 2 : 1);
+				
+				weapon.zombX = nearest.x;
+				weapon.zombY = nearest.y;
+				weapon.attr({
 					'path': 'M' + plrX + ' ' + plrY + ' L' + nearest.x + ' ' + nearest.y,
 					'opacity': '1'
 				});
