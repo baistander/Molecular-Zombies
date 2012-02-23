@@ -315,7 +315,6 @@ var pz = {};
 					'stroke-opacity': '.5'
 				});
 				zomb.timeToWander = mathfloor(mathrandom() * zombieWanderFreq);
-				zomb.wanderDir = mathpi * mathrandom() * 2;
 				zombies.push(zomb);
 			}
 		},
@@ -327,7 +326,7 @@ var pz = {};
 				zombX = zomb.attr('x');
 				zombY = zomb.attr('y');
 				
-				if(zomb.timeToWander > 10 && civilians.length > 0){
+				if(zomb.timeToWander > 15 && civilians.length > 0){
 					nearest = {
 						dist : 1000
 					};
@@ -349,6 +348,7 @@ var pz = {};
 								distX : distX,
 								distY : distY
 							};
+							zomb.nearest = nearest;
 						}
 					}
 					
@@ -376,7 +376,6 @@ var pz = {};
 							'stroke': '#F80F00'
 						});
 						civ.timeToWander = zombieWanderFreq;
-						civ.wanderDir = mathpi * mathrandom() * 2;
 						zombies.push(civ);
 						
 						if(civ.type == 'player'){
@@ -384,15 +383,31 @@ var pz = {};
 						}
 					}
 				}
-				else{					
+				else{
+					if(!zomb.wanderDir){
+						var dir = mathpi * mathrandom() * (zomb.nearest ? .5 : 2);
+						zomb.wanderDir = {
+							x : zombieSpeed * (zomb.nearest && zomb.nearest.distX < 0 ? -mathcos(dir) : mathcos(dir)),
+							y : zombieSpeed * (zomb.nearest && zomb.nearest.distY < 0 ? -mathsin(dir) : mathsin(dir))
+						};
+					}
+					
+					zombX = zombX + zomb.wanderDir.x;
+					zombY = zombY + zomb.wanderDir.y;
+					zomb.wanderDir.x = (zombX < 1 || zombX > screenWidth - 7 ? -zomb.wanderDir.x : zomb.wanderDir.x);
+					zomb.wanderDir.y = (zombY < 0 || zombY > screenHeight - 6 ? -zomb.wanderDir.y : zomb.wanderDir.y);
+					
 					zomb.attr({
-						'x': zombX + mathcos(zomb.wanderDir),
-						'y': zombY + mathsin(zomb.wanderDir)
+						'x': zombX,
+						'y': zombY
 					});
 					
 					if(zomb.timeToWander <= 0){
 						zomb.timeToWander = zombieWanderFreq;
-						zomb.wanderDir = mathpi * mathrandom() * 2;
+						
+						if(civilians.length > 0){
+							zomb.wanderDir = undefined;
+						}
 					}
 				}
 				
