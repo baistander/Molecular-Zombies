@@ -1,47 +1,100 @@
-<!doctype html>
-<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
-<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
-<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
-<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
-<!-- Consider adding a manifest.appcache: h5bp.com/d/Offline -->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+	<title>Pixel Zombies</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
 
-  <!-- Use the .htaccess and remove these lines to avoid edge case issues.
-       More info: h5bp.com/i/378 -->
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <!-- Le styles -->
+    <link href="/_/less/bootstrap.less?v=1" rel="stylesheet/less">
+    <link href="/_/less/responsive.less" rel="stylesheet/less">
 
-  <title>Pixel Zombies</title>
-  <meta name="description" content="Pixel Zombies Game">
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+	<script src="/js/libs/less-1.3.0.min.js"></script>
+	
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/_/ico/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/_/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/_/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="/_/ico/apple-touch-icon-57-precomposed.png">
+  </head>
 
-  <!-- Mobile viewport optimized: h5bp.com/viewport -->
-  <meta name="viewport" content="width=device-width">
+  <body>
 
-  <!-- Place favicon.ico and apple-touch-icon.png in the root directory: mathiasbynens.be/notes/touch-icons -->
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#">Pixel Zombies</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="#">Project Home</a></li>
+              <li><a href="http://github.com/baistander">Jerry Bai</a></li>
+              <li><a href="http://github.com/buzzedword">Danny Garcia</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
 
-  <link rel="stylesheet" href="css/style.css">
+    <div class="container">
 
-  <!-- More ideas for your <head> here: h5bp.com/d/head-Tips -->
+      <!-- Main hero unit for a primary marketing message or call to action -->
+      <div class="hero-unit" id="play-stage">
 
-  <!-- All JavaScript at the bottom, except this Modernizr build.
-       Modernizr enables HTML5 elements & feature detects for optimal performance.
-       Create your own custom Modernizr build: www.modernizr.com/download/ -->
-  <script src="js/libs/modernizr-2.5.3.min.js"></script>
-</head>
-<body>
-  <header></header>
-  
-  <div role="main"></div>
-  
-  <footer></footer>
+      </div>
 
-  <!-- scripts concatenated and minified via build script -->
-  <script src="js/libs/jquery-1.7.1.js"></script>
-  <script src="js/libs/raphael-min.js"></script>
-  <script src="js/plugins.js"></script>
-  <script data-main="js/bridge.js" src="require.js"></script>
-  <!-- end scripts -->
-  
-</body>
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="span4">
+          <h2>How to Play:</h2>
+           <p>The object of the game is to protect the civilians (in green) from the zombies (in red). Stay alive as long as possible!</p>
+        </div>
+        <div class="span4">
+		&nbsp;
+       </div>
+        <div class="span4">
+          <h2>Controls:</h2>
+          <p>Press the Up, Down, Left, and Right keys to control your character. Accelerometer controls for mobile coming soon.</p>
+        </div>
+      </div>
+
+      <hr>
+
+      <footer>
+        <p>&copy; Not Quite Noise 2012</p>
+      </footer>
+
+    </div> <!-- /container -->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+	<script src="js/libs/jquery-1.7.1.js"></script>
+	<script src="js/libs/raphael-min.js"></script>
+	<script src="js/plugins.js"></script>
+	<script data-main="js/bridge.js" src="require.js"></script>
+    <script src="/_/js/bootstrap-transition.js"></script>
+    <script src="/_/js/bootstrap-alert.js"></script>
+    <script src="/_/js/bootstrap-modal.js"></script>
+    <script src="/_/js/bootstrap-dropdown.js"></script>
+    <script src="/_/js/bootstrap-scrollspy.js"></script>
+    <script src="/_/js/bootstrap-tab.js"></script>
+    <script src="/_/js/bootstrap-tooltip.js"></script>
+    <script src="/_/js/bootstrap-popover.js"></script>
+    <script src="/_/js/bootstrap-button.js"></script>
+    <script src="/_/js/bootstrap-collapse.js"></script>
+    <script src="/_/js/bootstrap-carousel.js"></script>
+    <script src="/_/js/bootstrap-typeahead.js"></script>
+
+  </body>
 </html>

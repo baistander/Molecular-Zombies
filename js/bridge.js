@@ -5,6 +5,6 @@ require.config({
 	locale: "en-us",
 });
 
-require(['./script'], function(){
+require(['./app'], function(){
 
 });
