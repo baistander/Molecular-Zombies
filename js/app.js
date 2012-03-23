@@ -8,8 +8,8 @@ var pz = {};
 (function(window, undefined){
 	var $ = jQuery,
 		screen,
-		screenWidth = 480,
-		screenHeight = 320,
+		screenWidth = jQuery('#play-stage').width(),
+		screenHeight =jQuery('#play-stage').height(),
 		screenTexts = {},
 		civilianCount = 100,
 		civilianSpeed = 1.25,
@@ -33,12 +33,11 @@ var pz = {};
 		playerRange = 75,
 		playerCooldown = 4,
 		playerKeys = [],
-		gameOver = false,
 		testFrameByFrame = false,
 		testFps = true;
 	
 	pz.init = function(){
-		screen = Raphael(0, 0, screenWidth, screenHeight);
+		screen = Raphael('play-stage', '100%', '100%');
 		
 		pz.screen.draw();
 		pz.player.init();
@@ -58,6 +57,17 @@ var pz = {};
 		}
 
 		pz.play();
+	};
+	
+	pz.gameOver = function(bool){
+		if (bool === true){
+			clearTimeout(playTimer);
+		}
+		bootbox.confirm("The Zombies got you!", "Stay on the page", "New Game", function(result) {
+		    if (result) {
+		        location.reload(true)
+		    }
+		});
 	};
 	
 	pz.screen = {
@@ -415,6 +425,7 @@ var pz = {};
 						
 						if(civ.type == 'player'){
 							player.isZombie = true;
+							pz.gameOver(true);
 						}
 					}
 				}
