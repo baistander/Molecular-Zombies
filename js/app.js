@@ -33,7 +33,6 @@ var pz = {};
 		playerRange = 75,
 		playerCooldown = 4,
 		playerKeys = [],
-		gameOver = false,
 		testFrameByFrame = false,
 		testFps = true;
 	
@@ -58,6 +57,17 @@ var pz = {};
 		}
 
 		pz.play();
+	};
+	
+	pz.gameOver = function(bool){
+		if (bool === true){
+			clearTimeout(playTimer);
+		}
+		bootbox.confirm("The Zombies got you!", "Stay on the page", "New Game", function(result) {
+		    if (result) {
+		        location.reload(true)
+		    }
+		});
 	};
 	
 	pz.screen = {
@@ -415,6 +425,7 @@ var pz = {};
 						
 						if(civ.type == 'player'){
 							player.isZombie = true;
+							pz.gameOver(true);
 						}
 					}
 				}
