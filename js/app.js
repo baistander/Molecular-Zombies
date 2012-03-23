@@ -8,8 +8,8 @@ var pz = {};
 (function(window, undefined){
 	var $ = jQuery,
 		screen,
-		screenWidth = 480,
-		screenHeight = 320,
+		screenWidth = jQuery('#play-stage').width(),
+		screenHeight =jQuery('#play-stage').height(),
 		screenTexts = {},
 		civilianCount = 100,
 		civilianSpeed = 1.25,
@@ -38,7 +38,7 @@ var pz = {};
 		testFps = true;
 	
 	pz.init = function(){
-		screen = Raphael(0, 0, screenWidth, screenHeight);
+		screen = Raphael('play-stage', '100%', '100%');
 		
 		pz.screen.draw();
 		pz.player.init();
