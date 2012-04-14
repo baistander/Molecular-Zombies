@@ -11,10 +11,10 @@ var pz = {};
 		screenWidth = jQuery('#play-stage').width(),
 		screenHeight =jQuery('#play-stage').height(),
 		screenTexts = {},
-		civilianCount = 100,
+		civilianCount = 20,
 		civilianSpeed = 1.25,
 		civilians = [],
-		zombieCount = 50,
+		zombieCount = 5,
 		zombieSpeed = 2,
 		zombieWanderFreq = 50,
 		zombies = [],
@@ -33,16 +33,21 @@ var pz = {};
 		playerRange = 75,
 		playerCooldown = 4,
 		playerKeys = [],
+		gameOver = false,
+		highScore = 0,
 		testFrameByFrame = false,
 		testFps = true;
 	
 	pz.init = function(){
 		screen = Raphael('play-stage', '100%', '100%');
 		
+		highScore = localStorage.getItem('highScore');
+		highScore = ((!highScore) ? 0 : highScore);
+		
 		pz.screen.draw();
+		pz.player.createWeapon();
 		pz.player.init();
 		pz.civilians.init();
-		pz.player.createWeapon();
 		pz.zombies.init();
 		pz.explosions.init();
 		pz.screen.initTexts();
@@ -55,19 +60,33 @@ var pz = {};
 		if(testFrameByFrame){
 			$(window).on('click', pz.play);
 		}
-
+		
 		pz.play();
+		gameOver = false;
 	};
 	
 	pz.gameOver = function(bool){
-		if (bool === true){
-			clearTimeout(playTimer);
+		var score, message;
+		
+		if(bool){
+			score = civilians.length;
+			highScore = ((score > highScore) ? score : highScore);
+			localStorage.setItem('highScore', highScore);
+			pz.screen.updateScore();
+			
+			message = 'You\'ve saved ' + score + ' civilian' + ((score) > 1 ? 's' : '') + '... not bad.';
 		}
-		bootbox.confirm("The Zombies got you!", "Stay on the page", "New Game", function(result) {
+		else{
+			message = 'Zombies made a snack out of you!';
+		}
+		
+		bootbox.confirm(message, "Stay on the page", "New Game", function(result) {
 		    if (result) {
-		        location.reload(true)
+		        location.reload(true);
 		    }
 		});
+		
+		gameOver = true;
 	};
 	
 	pz.screen = {
@@ -95,22 +114,29 @@ var pz = {};
 				});
 			}
 		},
-		initTexts : function(){
-			screenTexts.zombies = screen.text(470, 10, 'zombies: ' + zombieCount);
+		initTexts : function(){			
+			screenTexts.zombies = screen.text(screenWidth-10, 10, 'zombies: ' + zombieCount);
 			screenTexts.zombies.attr({
 				'fill': '#fff',
 				'font': '9px Arial',
 				'text-anchor': 'end'
 			});
 			
-			screenTexts.civilians = screen.text(470, 23, 'civilians: ' + civilianCount);
+			screenTexts.civilians = screen.text(screenWidth-10, 23, 'civilians: ' + civilianCount);
 			screenTexts.civilians.attr({
 				'fill': '#fff',
 				'font': '9px Arial',
 				'text-anchor': 'end'
 			});
 			
-			screenTexts.fps = screen.text(433.5, 36, '');
+			screenTexts.highScore = screen.text(screenWidth-10, 36, 'high score: ' + highScore);
+			screenTexts.highScore.attr({
+				'fill': '#fff',
+				'font': '9px Arial',
+				'text-anchor': 'end'
+			});
+			
+			screenTexts.fps = screen.text(screenWidth-46.5, 49, '');
 			screenTexts.fps.attr({
 				'fill': '#fff',
 				'font': '9px Arial',
@@ -120,6 +146,9 @@ var pz = {};
 		updateTexts : function(){
 			screenTexts.zombies.attr('text', 'zombies: ' + zombies.length);
 			screenTexts.civilians.attr('text', 'civilians: ' + civilians.length);
+		},
+		updateScore : function(){
+			screenTexts.highScore.attr('text', 'high score: ' + highScore);
 		}
 	};
 	
@@ -158,6 +187,19 @@ var pz = {};
 			player.weapon1 = weapon1;
 			player.weapon2 = weapon2;
 			player.weaponIndex = 1;
+			player.weaponType = 1;
+		},
+		changeWeapon : function(){
+			player.weaponType = player.weaponType % 2 + 1;
+			
+			if(player.weaponType == 1){
+				player.weapon1.attr('stroke', '#0085FF');
+				player.weapon2.attr('stroke', '#0085FF');
+			}
+			else{
+				player.weapon1.attr('stroke', '#30BF89');
+				player.weapon2.attr('stroke', '#30BF89');
+			}
 		},
 		shoot : function(){
 			var weapon, plrX, plrY, zomb, zombX, zombY, distance, nearest, i;
@@ -199,7 +241,8 @@ var pz = {};
 						index : i,
 						x : zombX + 2,
 						y : zombY + 2,
-						dist : distance
+						dist : distance,
+						type : zomb.type
 					};
 				}
 			}
@@ -214,14 +257,41 @@ var pz = {};
 					'path': 'M' + plrX + ' ' + plrY + ' L' + nearest.x + ' ' + nearest.y,
 					'opacity': '1'
 				});
-				zombies.splice(nearest.index, 1)[0].attr('opacity', '0');
-				pz.explosions.explode(nearest.x, nearest.y);
+				if(!zombies[nearest.index].hitPoints){
+					zomb = zombies.splice(nearest.index, 1)[0];
+					
+					if(player.weaponType == 1){
+						zomb.attr('opacity', '0');
+						pz.explosions.explode(nearest.x, nearest.y, nearest.type);
+					}
+					else{
+						zomb.attr({
+							'fill': '#53FF00',
+							'stroke': '#53FF00'
+						});
+						zomb.zombies = [];
+						zomb.timeToWander = undefined;
+						civilians.push(zomb);
+					}
+					
+					if(zomb.halo){
+						zomb.halo.remove();
+					}
+				}
+				else{
+					zombies[nearest.index].hitPoints += -1;
+				}
 				
 				player.coolDown = playerCooldown;
 			}
 		},
 		keydown : function(event){
-			playerKeys[event.keyCode] = true;
+			if(event.keyCode == '32'){
+				pz.player.changeWeapon();
+			}
+			else{
+				playerKeys[event.keyCode] = true;
+			}
 		},
 		keyup : function(event){
 			playerKeys[event.keyCode] = false;
@@ -282,8 +352,8 @@ var pz = {};
 			var civ, civX, civY, zomb, zombX, zombY, distance, nearest, ratio, i, j;
 			
 			for(i=civilians.length-1; i>=0; i--){
-				if(zombies.length == 0){
-					return;
+				if(zombies.length == 0 && !gameOver){
+					pz.gameOver(true);
 				}
 			
 				civ = civilians[i];
@@ -359,6 +429,7 @@ var pz = {};
 					'stroke': '#F80F00',
 					'stroke-opacity': '.5'
 				});
+				zomb.speed = zombieSpeed;
 				zomb.timeToWander = mathfloor(mathrandom() * zombieWanderFreq);
 				zombies.push(zomb);
 			}
@@ -373,7 +444,8 @@ var pz = {};
 				
 				if(zomb.timeToWander > 15 && civilians.length > 0){
 					nearest = {
-						dist : 1000
+						dist : 1000,
+						civ : {}
 					};
 					
 					for(j=0; j<civilians.length; j++){
@@ -401,8 +473,8 @@ var pz = {};
 						nearest.civ.zombies.push(zomb);
 					}
 					
-					if(nearest.dist > zombieSpeed){
-						ratio = zombieSpeed / nearest.dist;
+					if(nearest.dist > zomb.speed){
+						ratio = zomb.speed / nearest.dist;
 						zomb.attr({
 							'x': zombX + ratio * (nearest.distX),
 							'y': zombY + ratio * (nearest.distY)
@@ -416,16 +488,31 @@ var pz = {};
 						
 						//eat civilian
 						civ = civilians.splice(nearest.index, 1)[0];
-						civ.attr({
-							'fill': '#F80F00',
-							'stroke': '#F80F00'
-						});
-						civ.timeToWander = zombieWanderFreq;
+						civ.eaten = ((typeof civ.eaten === 'undefined') ? 1 : civ.eaten + 1);
+						
+						//if civilian's been eaten 3 or more times, it evolves into a shadow zombie
+						if(civ.eaten < 3 && zomb.type != 'shadow'){
+							civ.attr({
+								'fill': '#F80F00',
+								'stroke': '#F80F00'
+							});
+							civ.speed = zombieSpeed;
+						}
+						else{
+							civ.attr({
+								'fill': '#4F1413',
+								'stroke': '#4F1413'
+							});
+							civ.speed = zombieSpeed * 1.5;
+							civ.type = ((civ.type != 'player') ? 'shadow' : civ.type);
+						}
+							
+						civ.timeToWander = 0;
 						zombies.push(civ);
 						
 						if(civ.type == 'player'){
 							player.isZombie = true;
-							pz.gameOver(true);
+							pz.gameOver(false);
 						}
 					}
 				}
@@ -433,8 +520,8 @@ var pz = {};
 					if(!zomb.wanderDir){
 						var dir = mathpi * mathrandom() * (zomb.nearest ? .5 : 2);
 						zomb.wanderDir = {
-							x : zombieSpeed * (zomb.nearest && zomb.nearest.distX < 0 ? -mathcos(dir) : mathcos(dir)),
-							y : zombieSpeed * (zomb.nearest && zomb.nearest.distY < 0 ? -mathsin(dir) : mathsin(dir))
+							x : zomb.speed * (zomb.nearest && zomb.nearest.distX < 0 ? -mathcos(dir) : mathcos(dir)),
+							y : zomb.speed * (zomb.nearest && zomb.nearest.distY < 0 ? -mathsin(dir) : mathsin(dir))
 						};
 					}
 					
@@ -442,7 +529,7 @@ var pz = {};
 					zombY = zombY + zomb.wanderDir.y;
 					zomb.wanderDir.x = (zombX < 1 || zombX > screenWidth - 7 ? -zomb.wanderDir.x : zomb.wanderDir.x);
 					zomb.wanderDir.y = (zombY < 0 || zombY > screenHeight - 6 ? -zomb.wanderDir.y : zomb.wanderDir.y);
-					
+
 					zomb.attr({
 						'x': zombX,
 						'y': zombY
@@ -481,7 +568,7 @@ var pz = {};
 				zombieExplosions.push({explosion:explosion, count:0});
 			}
 		},
-		explode : function(x, y){
+		explode : function(x, y, type){
 			var explosion, bit, index, i, j, k;
 			
 			for(i=0; i<zombieExplosions.length; i++){
@@ -493,10 +580,13 @@ var pz = {};
 					for(j=-1; j<=1; j++){
 						for(k=-1; k<=1; k++){
 							bit = explosion.explosion[index];
-							bit.attr('x', x + j*3);
-							bit.attr('y', y + k*3);
-							bit.attr('opacity', '1');
-							
+							bit.attr({
+								'x': x + j*3,
+								'y': y + k*3,
+								'fill': ((type == 'shadow') ? '#A74A48' : '#F80F00'),
+								'opacity': '1'
+							});
+														
 							index++;
 						}
 					}
@@ -537,9 +627,9 @@ var pz = {};
 	
 	pz.play = function(){
 		pz.player.move();
-		pz.player.shoot();
 		pz.zombies.move();
 		pz.civilians.move();
+		pz.player.shoot();
 		pz.explosions.animate();
 		pz.screen.updateTexts();
 		
