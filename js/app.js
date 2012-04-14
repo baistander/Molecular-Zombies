@@ -270,13 +270,10 @@ var pz = {};
 							'stroke': '#53FF00'
 						});
 						zomb.zombies = [];
-						zomb.timeToWander = undefined;
+						zomb.timeToWander = 0;
 						civilians.push(zomb);
 					}
 					
-					if(zomb.halo){
-						zomb.halo.remove();
-					}
 				}
 				else{
 					zombies[nearest.index].hitPoints += -1;
@@ -351,7 +348,7 @@ var pz = {};
 		move : function(){
 			var civ, civX, civY, zomb, zombX, zombY, distance, nearest, ratio, i, j;
 			
-			for(i=civilians.length-1; i>=0; i--){
+			for(i=0; i<civilians.length; i++){
 				if(zombies.length == 0 && !gameOver){
 					pz.gameOver(true);
 				}
@@ -383,7 +380,7 @@ var pz = {};
 				}
 				
 				if(nearest.x){
-					ratio = civilianSpeed / nearest.dist;
+					ratio = ((nearest.dist > 0) ? civilianSpeed / nearest.dist : 0);
 					civX = civX - ratio * (nearest.x - civX);
 					civY = civY - ratio * (nearest.y - civY);
 					
@@ -469,7 +466,7 @@ var pz = {};
 						}
 					}
 					
-					if(nearest.civ.type != 'player'){
+					if(nearest.civ.type && nearest.civ.type != 'player'){
 						nearest.civ.zombies.push(zomb);
 					}
 					
@@ -507,7 +504,7 @@ var pz = {};
 							civ.type = ((civ.type != 'player') ? 'shadow' : civ.type);
 						}
 							
-						civ.timeToWander = 0;
+						civ.timeToWander = zombieWanderFreq;
 						zombies.push(civ);
 						
 						if(civ.type == 'player'){
